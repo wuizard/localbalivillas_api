@@ -16,6 +16,7 @@ module.exports = function(app) {
     let activityControllers = require('../../controllers/admin/activityControllers/activities');
     let eventPackageControllers = require('../../controllers/admin/eventControllers/eventPackages');
     let enquiryControllers = require('../../controllers/admin/enquiryControllers/enquiries');
+    let activityOrderControllers = require('../../controllers/admin/activityControllers/activityOrders');
 
     // The only route reachable without a token.
     app.route('/login').post(authController.login);
@@ -61,6 +62,10 @@ module.exports = function(app) {
     app.route('/create-event-package').post(eventPackageControllers.createEventPackage);
     app.route('/update-event-package').post(eventPackageControllers.updateEventPackage);
     app.route('/delete-event-package/:packageId').delete(eventPackageControllers.deleteEventPackage);
+
+    app.route('/activity-orders').get(activityOrderControllers.getActivityOrders);
+    app.route('/activity-order/status').post(activityOrderControllers.updateActivityOrderStatus);
+    app.route('/activity-order/:id').get(activityOrderControllers.getActivityOrder);
 
     app.route('/enquiries').get(enquiryControllers.getEnquiries);
     app.route('/enquiry/:id').get(enquiryControllers.getEnquiryDetail);

@@ -18,6 +18,13 @@ const activitiesModel = require('./activities')(
     bcrypt,
     deepPopulate,
 );
+const activityBookingModel = require('./activityBookings')(
+    Schema,
+    DB,
+    [],
+    bcrypt,
+    deepPopulate,
+);
 const activityPriceModel = require('./activityPrices')(
     Schema,
     DB,
@@ -108,6 +115,7 @@ const userModel = require('./users')(
 )
 
 exports.Activity = activitiesModel;
+exports.ActivityBooking = activityBookingModel;
 exports.ActivityPrice = activityPriceModel;
 exports.Admin = adminModel;
 exports.Booking = bookingModel;

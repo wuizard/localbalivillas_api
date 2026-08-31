@@ -11,12 +11,16 @@ module.exports = function(app) {
     let activityController = require('../../controllers/api/activityControllers/activities')
     let eventController = require('../../controllers/api/eventControllers/events')
     let enquiryController = require('../../controllers/api/enquiryControllers/enquiries')
+    let activityBookingController = require('../../controllers/api/activityControllers/activityBookings')
 
     app.route('/region/location').get(regionController.getLocation);
 
     app.route('/activities/list').get(activityController.getActivities);
     // before '/activity/:id' or ':id' swallows the availability segment
     app.route('/activity/:id/availability').get(activityController.getActivityAvailability);
+    app.route('/activity/quote').post(activityBookingController.quoteActivityBooking);
+    app.route('/activity/booking').post(activityBookingController.submitActivityBooking);
+    // after the fixed segments above, or ':id' swallows 'quote' and 'booking'
     app.route('/activity/:id').get(activityController.getActivityDetail);
 
     app.route('/event-packages').get(eventController.getEventPackages);
@@ -33,6 +37,7 @@ module.exports = function(app) {
     app.route('/properties/list').get(propertiesController.getProperties);
 
     app.route('/booking/coupon-check').post(bookingController.checkCoupon);
+    app.route('/booking/stay-lookup').post(bookingController.lookupStay);
     app.route('/booking/submit').post(bookingController.submitBookings);
 
     app.route('/reviews/:propertyId').get(reviewController.getReviews);

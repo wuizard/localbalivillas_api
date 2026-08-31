@@ -28,56 +28,72 @@ module.exports = {
         }
         return randomString;
     },
-    async createPaymentLink({
-        bookingData
+    /**
+     * Creates a Xendit invoice from primitives. `createPaymentLink` below is a thin
+     * wrapper for villa bookings; activity orders call this directly. Keeping one
+     * request builder means the two funnels cannot drift apart on currency, customer
+     * shape or redirect URLs.
+     */
+    async createInvoice({
+        externalId,
+        amount,
+        customer,
+        items,
+        successRedirectUrl,
+        failureRedirectUrl,
     }) {
         try {
-            if (!bookingData) { throw 'Error' }
+            if (!externalId || !amount) { throw 'Error' }
             const authToken = Buffer.from(`${CONFIG.xenditSecretAPIKey}:`).toString('base64');
-            console.log(authToken)
-            let response = await axios({
+            const response = await axios({
                 method: 'POST',
                 url: 'https://api.xendit.co/v2/invoices',
                 headers: {
-                  'Content-Type': 'application/json',
-                  'Authorization': `Basic ${authToken}`,
+                    'Content-Type': 'application/json',
+                    'Authorization': `Basic ${authToken}`,
                 },
                 data: {
-                    external_id: bookingData.bookingId,
-                    amount: bookingData.totalPrice,
+                    external_id: externalId,
+                    amount,
                     currency: 'IDR',
-                    customer: {
-                        given_names: bookingData.user.firstName,
-                        surname: bookingData.user.lastName,
-                        email: bookingData.user.email,
-                        mobile_number: bookingData.user.phoneNumber.replace('08', '+628'),
-                    },
+                    customer,
                     customer_notification_preference: {
                         invoice_paid: ['email', 'whatsapp']
                     },
-                    success_redirect_url: 'https://localbalivillas.com/',
-                    failure_redirect_url: 'https://localbalivillas.com/',
-                    items: [
-                        {
-                            name: bookingData.propertiesInfo.roomName,
-                            quantity: 1,
-                            price: bookingData.subtotal,
-                            category: bookingData.propertiesInfo.propertiesName
-                        },
-                    ],
-                    // fees: [
-                    //     {
-                    //         type: "Delivery",
-                    //         value: 10000
-                    //     }
-                    // ]
+                    success_redirect_url: successRedirectUrl || 'https://localbalivillas.com/',
+                    failure_redirect_url: failureRedirectUrl || 'https://localbalivillas.com/',
+                    items,
                 },
             });
-            console.log(response)
             return { data: response.data }
         } catch (error) {
-            console.log(error)
+            console.log('createInvoice failed', error && error.message ? error.message : error)
             return { error }
         }
+    },
+
+    async createPaymentLink({
+        bookingData
+    }) {
+        if (!bookingData) { return { error: 'Error' } }
+
+        return module.exports.createInvoice({
+            externalId: bookingData.bookingId,
+            amount: bookingData.totalPrice,
+            customer: {
+                given_names: bookingData.user.firstName,
+                surname: bookingData.user.lastName,
+                email: bookingData.user.email,
+                mobile_number: bookingData.user.phoneNumber.replace('08', '+628'),
+            },
+            items: [
+                {
+                    name: bookingData.propertiesInfo.roomName,
+                    quantity: 1,
+                    price: bookingData.subtotal,
+                    category: bookingData.propertiesInfo.propertiesName
+                },
+            ],
+        });
     }
 }

@@ -2,6 +2,25 @@ const { sendEmail } = require("../../../helper/email")
 const { emailLBVNewBooking } = require("../../../helper/emailHTML/_emailFormat")
 const { randomString, createPaymentLink } = require("../../../helper/order")
 const { checkUser } = require("../../../helper/user")
+const { assertKind } = require("../../../helper/coupon")
+const { allow } = require("../../../helper/throttle")
+
+// A cancelled or refunded stay is not a stay. Anything else on the timeline still
+// means someone is expected at the villa on those dates.
+const STAYING_STATUSES = ['waiting_confirmation', 'confirmed', 'checkout']
+
+function clientKey(req) {
+    return (
+        req.headers['cf-connecting-ip'] ||
+        (req.headers['x-forwarded-for'] || '').split(',')[0].trim() ||
+        req.ip ||
+        'unknown'
+    )
+}
+
+function isEmail(value) {
+    return typeof value === 'string' && /^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(value)
+}
 
 module.exports = {
     getBookings: async (req, res) => { 
@@ -151,6 +170,10 @@ module.exports = {
 
             if (!coupon) { throw { message: "Coupon not found" } }
 
+            // Villa checkout only accepts codes scoped to villas or both. Existing
+            // coupons have no scope and read as 'villas', so nothing changes for them.
+            assertKind(coupon, 'villas')
+
             // check coupon information
             if (coupon.limit) { 
                 let bookings = await MODELS.Booking.find({
@@ -187,6 +210,70 @@ module.exports = {
             console.log(coupon)
 
             OUTPUT.responseSuccess(res, coupon)
+        } catch (error) {
+            OUTPUT.responseError(res, error)
+        }
+    },
+
+    /**
+     * Looks up a stay so the activity calendar can offer the dates the guest is
+     * actually on the island, instead of asking someone on holiday to work out which
+     * Tuesday they mean.
+     *
+     * Email is required alongside the booking id, matching the enquiry lookup. A
+     * booking id is not a secret - it travels in confirmation emails and WhatsApp
+     * threads - and "which villa is this person in, and on what nights" is exactly
+     * the sort of thing that should not fall out of a forwarded screenshot.
+     *
+     * What comes back is the minimum the calendar needs: property, first night, last
+     * night. No name, no contact details, no price.
+     */
+    lookupStay: async (req, res) => {
+        try {
+            const { bookingId, email } = req.body || {}
+
+            if (!allow(`stay:${clientKey(req)}`, { max: 10, windowMs: 10 * 60 * 1000 })) {
+                throw { statusCode: 429, message: 'Too many attempts. Please try again shortly.' }
+            }
+
+            // One message for every failure. Separate ones would let this endpoint be
+            // used to test whether a booking id exists, or which email is on it.
+            const notFound = {
+                statusCode: 404,
+                message: 'We could not find a stay with those details.'
+            }
+
+            if (!bookingId || !isEmail(email)) { throw notFound }
+
+            const booking = await MODELS.Booking.findOne(
+                {
+                    bookingId: String(bookingId).trim(),
+                    'guestInfo.email': String(email).trim().toLowerCase(),
+                    lastStatus: { $in: STAYING_STATUSES },
+                    isDeleted: { $ne: true },
+                },
+                { bookingId: 1, dates: 1, 'propertiesInfo.propertiesName': 1 }
+            ).lean()
+
+            if (!booking || !booking.dates || booking.dates.length === 0) { throw notFound }
+
+            const dates = [...booking.dates].sort()
+            const checkOut = dates[dates.length - 1]
+
+            // A finished stay cannot host an activity, and returning its dates would be
+            // disclosure with no purpose.
+            const today = new Date().toISOString().slice(0, 10)
+            if (checkOut < today) { throw notFound }
+
+            OUTPUT.responseSuccess(res, {
+                bookingId: booking.bookingId,
+                propertyName: (booking.propertiesInfo || {}).propertiesName || null,
+                checkIn: dates[0],
+                checkOut,
+                // The last date is the checkout morning, so nights is one fewer - the
+                // same rule the villa pricing loop uses.
+                nights: Math.max(1, dates.length - 1),
+            })
         } catch (error) {
             OUTPUT.responseError(res, error)
         }

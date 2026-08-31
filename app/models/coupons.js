@@ -13,6 +13,14 @@ module.exports = function(Schema, mongoose, deepPopulate) {
         uppercase: true,
       },
       termsCondition: String,
+      // What the code may be spent on. Records created before activities existed have
+      // no value here; every read treats that as 'villas', which is the only thing
+      // they could ever have been used for.
+      appliesTo: {
+        type: String,
+        enum: ['villas', 'activities', 'both'],
+        default: 'villas'
+      },
       couponType: String, // percentage, nominal
       couponUsage: String, // total order, night
       minimumPurchase: Number,
