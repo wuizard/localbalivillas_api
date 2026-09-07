@@ -9,7 +9,7 @@ module.exports = function(Schema, mongoose, enumList, bcrypt, deepPopulate) {
         type: Array,
         default: null
       },
-      category: String, // tour | transfer | wellness | water | culture | adventure | class
+      category: String, // slug from the categories collection, managed in the CMS
       region: String,
       regionId: {
         type: Schema.ObjectId,

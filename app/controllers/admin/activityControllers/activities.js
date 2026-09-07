@@ -3,6 +3,7 @@ const moment = require("moment");
 const { ObjectId } = mongoose.Types;
 
 const { WEEKDAYS } = require("../../../helper/activityRates");
+const { activeCategorySlugs } = require("../categoryControllers/categories");
 
 // Only these come off the request body. Spreading the raw body would let a caller
 // set isDeleted, createdDate or anything else the CMS happens to be holding.
@@ -34,7 +35,6 @@ const ACTIVITY_FIELDS = [
 ];
 
 const VALID_STATUS = ['draft', 'published'];
-const CATEGORIES = ['tour', 'transfer', 'wellness', 'water', 'culture', 'adventure', 'class'];
 
 function resolveStatus(value) {
     return VALID_STATUS.indexOf(value) >= 0 ? value : 'published';
@@ -54,15 +54,21 @@ function slugify(value) {
  * with a price on it, so the things a guest needs are required at the moment of
  * publishing rather than at the moment of typing.
  */
-function assertPublishable(body) {
+async function assertPublishable(body) {
     if (!body.name || !String(body.name).trim()) {
         throw { statusCode: 400, message: 'Name is required to publish' }
     }
     if (!body.summary || !String(body.summary).trim()) {
         throw { statusCode: 400, message: 'Summary is required to publish - it is the card and the meta description' }
     }
-    if (!CATEGORIES.includes(body.category)) {
-        throw { statusCode: 400, message: `Category must be one of: ${CATEGORIES.join(', ')}` }
+    // The taxonomy is managed in the CMS now, so the allowed values are read
+    // from the categories collection rather than hard-coded here.
+    const categories = await activeCategorySlugs();
+    if (!categories.length) {
+        throw { statusCode: 400, message: 'No categories have been set up yet. Add them under Settings > Categories before publishing.' }
+    }
+    if (!categories.includes(body.category)) {
+        throw { statusCode: 400, message: `Category must be one of: ${categories.join(', ')}` }
     }
     if (!Array.isArray(body.activityImage) || body.activityImage.length === 0) {
         throw { statusCode: 400, message: 'At least one image is required to publish' }
@@ -240,7 +246,7 @@ module.exports = {
             let { body } = req
             const status = resolveStatus(body.status)
 
-            if (status === 'published') { assertPublishable(body) }
+            if (status === 'published') { await assertPublishable(body) }
 
             const doc = pick(body)
             doc.key = await uniqueKey(body.key, body.name)
@@ -272,7 +278,7 @@ module.exports = {
             // silently publish a draft or unpublish a live activity.
             const status = body.status ? resolveStatus(body.status) : (current.status || 'published')
             if (status === 'published') {
-                assertPublishable({ ...current, ...pick(body) })
+                await assertPublishable({ ...current, ...pick(body) })
             }
 
             const doc = pick(body)

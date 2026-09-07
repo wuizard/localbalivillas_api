@@ -17,6 +17,7 @@ module.exports = function(app) {
     let eventPackageControllers = require('../../controllers/admin/eventControllers/eventPackages');
     let enquiryControllers = require('../../controllers/admin/enquiryControllers/enquiries');
     let activityOrderControllers = require('../../controllers/admin/activityControllers/activityOrders');
+    let categoryControllers = require('../../controllers/admin/categoryControllers/categories');
 
     // The only route reachable without a token.
     app.route('/login').post(authController.login);
@@ -77,6 +78,14 @@ module.exports = function(app) {
     app.route('/order/refund-order').get(bookingControllers.refundBooking);
     app.route('/order/checkout-order').get(bookingControllers.checkoutBooking);
     app.route('/order/:id').get(bookingControllers.getBooking);
+
+    // Activity categories. The list seeds itself on first read, so a fresh
+    // database still opens the CMS with the standard taxonomy.
+    app.route('/categories').get(categoryControllers.getCategories);
+    app.route('/create-category').post(categoryControllers.createCategory);
+    app.route('/update-category').post(categoryControllers.updateCategory);
+    app.route('/reorder-categories').post(categoryControllers.reorderCategories);
+    app.route('/delete-category/:categoryId').delete(categoryControllers.deleteCategory);
 
     app.route('/regions').get(regionControllers.getRegion);
     app.route('/create-region').post(regionControllers.createRegion);

@@ -28,7 +28,13 @@ module.exports = {
 
             let params = publicFilter()
 
-            if (category) { params.category = category }
+            // Comma separated, so the site can ask for several at once:
+            // ?category=marine,nature. A single value still matches exactly.
+            if (category) {
+                const slugs = String(category).split(',').map((slug) => slug.trim()).filter(Boolean)
+                if (slugs.length === 1) { params.category = slugs[0] }
+                else if (slugs.length > 1) { params.category = { $in: slugs } }
+            }
             if (region) { params.region = { $regex: region, $options: 'i' } }
             if (location) { params.location = { $regex: location, $options: 'i' } }
             if (search) {

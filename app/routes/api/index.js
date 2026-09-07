@@ -12,8 +12,12 @@ module.exports = function(app) {
     let eventController = require('../../controllers/api/eventControllers/events')
     let enquiryController = require('../../controllers/api/enquiryControllers/enquiries')
     let activityBookingController = require('../../controllers/api/activityControllers/activityBookings')
+    let categoryController = require('../../controllers/api/categoryControllers/categories')
 
     app.route('/region/location').get(regionController.getLocation);
+
+    // Powers the category selector and filter on the website.
+    app.route('/categories').get(categoryController.getCategories);
 
     app.route('/activities/list').get(activityController.getActivities);
     // before '/activity/:id' or ':id' swallows the availability segment
