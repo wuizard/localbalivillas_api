@@ -28,6 +28,7 @@ const ACTIVITY_FIELDS = [
     'disabledDate',
     'inclusions',
     'exclusions',
+    'showInclusions',
     'whatToBring',
     'cancellationPolicy',
     'supplier',
@@ -83,6 +84,12 @@ function pick(body) {
     const doc = {}
     for (const field of ACTIVITY_FIELDS) {
         if (body[field] !== undefined) { doc[field] = body[field] }
+    }
+
+    // The CMS radio posts a real boolean, but a hand-rolled call could send "false".
+    // Only an explicit off switches the section off - anything else leaves it on.
+    if (doc.showInclusions !== undefined) {
+        doc.showInclusions = !(doc.showInclusions === false || doc.showInclusions === 'false')
     }
 
     // Money is IDR integers everywhere else in this system; keep it that way here.

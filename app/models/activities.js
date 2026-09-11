@@ -50,6 +50,14 @@ module.exports = function(Schema, mongoose, enumList, bcrypt, deepPopulate) {
         type: Array,
         default: null
       },
+      // Whether the website renders the "What's included" section at all. Some
+      // activities are quoted per enquiry and listing an inclusion is misleading,
+      // so ops can switch the block off without deleting the lines they wrote.
+      // Defaults true so every activity written before this field keeps its section.
+      showInclusions: {
+        type: Boolean,
+        default: true
+      },
       whatToBring: {
         type: Array,
         default: null
