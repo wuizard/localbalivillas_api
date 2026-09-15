@@ -46,6 +46,11 @@ const bookingModel = require('./bookings')(
     bcrypt,
     deepPopulate,
 )
+const categoryModel = require('./categories')(
+    Schema,
+    DB,
+    deepPopulate,
+)
 const couponModel = require('./coupons')(
     Schema,
     DB,
@@ -119,6 +124,7 @@ exports.ActivityBooking = activityBookingModel;
 exports.ActivityPrice = activityPriceModel;
 exports.Admin = adminModel;
 exports.Booking = bookingModel;
+exports.Category = categoryModel;
 exports.Coupon = couponModel;
 exports.Currency = currencyModel;
 exports.Enquiry = enquiryModel;
