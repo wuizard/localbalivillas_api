@@ -18,6 +18,7 @@ module.exports = function(app) {
     let enquiryControllers = require('../../controllers/admin/enquiryControllers/enquiries');
     let activityOrderControllers = require('../../controllers/admin/activityControllers/activityOrders');
     let categoryControllers = require('../../controllers/admin/categoryControllers/categories');
+    let reviewControllers = require('../../controllers/admin/reviewControllers/reviews');
 
     // The only route reachable without a token.
     app.route('/login').post(authController.login);
@@ -71,6 +72,8 @@ module.exports = function(app) {
     app.route('/enquiries').get(enquiryControllers.getEnquiries);
     app.route('/enquiry/:id').get(enquiryControllers.getEnquiryDetail);
     app.route('/enquiry/status').post(enquiryControllers.updateEnquiryStatus);
+    
+    app.route('/reviews').get(reviewControllers.getReviews);
 
     app.route('/orders').get(bookingControllers.getBookings);
     app.route('/order/confirm-order').get(bookingControllers.confirmBooking);
