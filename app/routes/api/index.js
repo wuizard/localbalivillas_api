@@ -5,6 +5,7 @@ module.exports = function(app) {
 
     let propertiesController = require('../../controllers/api/propertiesControllers/properties')
     let reviewController = require('../../controllers/api/propertiesControllers/reviews')
+    let reviewInviteController = require('../../controllers/api/propertiesControllers/reviewInvites')
     let couponController = require('../../controllers/api/couponControllers/coupons')
     let bookingController = require('../../controllers/api/bookingControllers/booking')
     let regionController = require('../../controllers/api/regionControllers/location')
@@ -43,6 +44,11 @@ module.exports = function(app) {
     app.route('/booking/coupon-check').post(bookingController.checkCoupon);
     app.route('/booking/stay-lookup').post(bookingController.lookupStay);
     app.route('/booking/submit').post(bookingController.submitBookings);
+
+    // Before '/reviews/:propertyId' is irrelevant here - different prefix - but these
+    // two are the admin-issued link flow: the token stands in for the email check.
+    app.route('/review-invite/:token').get(reviewInviteController.getReviewInvite);
+    app.route('/review-invite/:token/submit').post(reviewInviteController.submitReviewInvite);
 
     app.route('/reviews/:propertyId').get(reviewController.getReviews);
     app.route('/reviews/create').post(reviewController.submitReview);

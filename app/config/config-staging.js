@@ -19,6 +19,9 @@ module.exports = {
     whatsappNumber: process.env.WHATSAPP_NUMBER || '6282340243600',
     teamEmail: process.env.TEAM_EMAIL || 'rsv@localbalivillas.com',
     cmsURL: 'https://staging-lbvcms.wuebuild.com',
+    // Where a review link points. SITE_URL overrides it for a deployment that serves
+    // the storefront somewhere else.
+    siteURL: process.env.SITE_URL || 'https://beta-lbv.netlify.app',
 
     // Mail. Credentials come from the environment only - never commit them.
     // Required in production: SMTP_USER, SMTP_PASSWORD.

@@ -111,6 +111,11 @@ const reviewsModel = require('./reviews')(
     DB,
     deepPopulate,
 )
+const reviewInvitesModel = require('./reviewInvites')(
+    Schema,
+    DB,
+    deepPopulate,
+)
 const userModel = require('./users')(
     Schema,
     DB,
@@ -134,5 +139,6 @@ exports.Properties = propertiesModel;
 exports.PropertyRoomPrices = propertiesRoomPriceModel;
 exports.PropertyRooms = propertiesRoomModel;
 exports.Region = regionModel;
+exports.ReviewInvites = reviewInvitesModel;
 exports.Reviews = reviewsModel;
 exports.User = userModel;

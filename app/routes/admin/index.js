@@ -19,6 +19,7 @@ module.exports = function(app) {
     let activityOrderControllers = require('../../controllers/admin/activityControllers/activityOrders');
     let categoryControllers = require('../../controllers/admin/categoryControllers/categories');
     let reviewControllers = require('../../controllers/admin/reviewControllers/reviews');
+    let reviewInviteControllers = require('../../controllers/admin/reviewControllers/reviewInvites');
 
     // The only route reachable without a token.
     app.route('/login').post(authController.login);
@@ -74,6 +75,12 @@ module.exports = function(app) {
     app.route('/enquiry/status').post(enquiryControllers.updateEnquiryStatus);
     
     app.route('/reviews').get(reviewControllers.getReviews);
+
+    // Review links. Issued against a booking, and the link itself is what lets the
+    // guest post - so these stay behind the admin gate above.
+    app.route('/review-links').get(reviewInviteControllers.getReviewInvites);
+    app.route('/review-link').post(reviewInviteControllers.createReviewInvite);
+    app.route('/review-link/:id').delete(reviewInviteControllers.revokeReviewInvite);
 
     app.route('/orders').get(bookingControllers.getBookings);
     app.route('/order/confirm-order').get(bookingControllers.confirmBooking);
